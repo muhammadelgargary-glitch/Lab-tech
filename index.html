@@ -47,12 +47,20 @@
             --app-font-family: 'Cairo', sans-serif;
             --app-font-size: 15px;
             --logo-shape: 12px;
+            /* إعدادات عرض النص */
+            --text-view-bg: #f8fafc;
+            --text-view-color: #1e293b;
+            --text-view-font-size: 14px;
+            --pdf-view-bg: #ffffff;
         }
 
         body.dark {
             --card-bg: #1e293b;
             --body-bg: #0f172a;
             --text-color: #f8fafc;
+            --text-view-bg: #1e293b;
+            --text-view-color: #f1f5f9;
+            --pdf-view-bg: #1e293b;
         }
 
         html, body {
@@ -88,6 +96,105 @@
         .test-card-item:hover {
             box-shadow: 0 10px 30px rgba(29, 78, 216, 0.15);
             transform: translateY(-2px);
+        }
+
+        .text-view-container {
+            background-color: var(--text-view-bg);
+            color: var(--text-view-color);
+            font-size: var(--text-view-font-size);
+            padding: 16px;
+            border-radius: 12px;
+            font-family: var(--app-font-family);
+            line-height: 1.8;
+            max-height: 500px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .text-view-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            max-height: 100vh;
+            padding: 24px;
+            background-color: var(--text-view-bg);
+            color: var(--text-view-color);
+            font-size: calc(var(--text-view-font-size) * 1.2);
+            border-radius: 0;
+        }
+
+        .pdf-view-container {
+            background-color: var(--pdf-view-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .pdf-view-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            border-radius: 0;
+            background-color: var(--pdf-view-bg);
+        }
+
+        .pdf-view-container.fullscreen iframe {
+            height: 100vh !important;
+            width: 100vw !important;
+        }
+
+        .fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(0,0,0,0.8);
+            transform: scale(1.1);
+        }
+
+        .close-fullscreen-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-fullscreen-btn.active {
+            display: flex;
         }
     </style>
 
@@ -135,7 +242,7 @@
                 </button>
             </div>
         </header>
-            <!-- Main Content Area -->
+    <!-- Main Content Area -->
     <main class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Sidebar Navigation -->
         <div class="lg:col-span-1 space-y-4">
@@ -165,8 +272,8 @@
             <div id="testsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
     </main>
-    </div>
-    <!-- Add / Edit Test Modal -->
+</div>
+<!-- Add / Edit Test Modal -->
 <div id="addTestModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
     <div class="bg-card w-full max-w-2xl rounded-2xl p-4 md:p-6 space-y-4 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[92vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b pb-3 dark:border-gray-700">
@@ -237,7 +344,7 @@
 </div>
 <!-- Modal: Test Details & Content Viewer -->
 <div id="testDetailModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-card w-full max-w-3xl rounded-2xl p-4 md:p-6 space-y-4 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[92vh] flex flex-col">
+    <div class="bg-card w-full max-w-4xl rounded-2xl p-4 md:p-6 space-y-4 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[92vh] flex flex-col">
         <div class="flex items-center justify-between border-b pb-3 dark:border-gray-700">
             <h3 id="modalDetailTitle" class="font-extrabold text-base md:text-lg text-primary-custom flex items-center gap-2"></h3>
             <button onclick="closeTestDetailModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -333,6 +440,51 @@
                     <option value="9999px">دائري بالكامل</option>
                     <option value="0px">مربع حاد</option>
                 </select>
+            </div>
+
+            <hr class="dark:border-gray-700">
+
+            <h4 class="font-bold text-sm text-primary-custom">إعدادات عرض النص المستخرج (OCR)</h4>
+            
+            <div>
+                <label class="block font-bold mb-1">لون خلفية النص</label>
+                <div class="flex gap-2">
+                    <button onclick="changeTextViewBg('#f8fafc')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#f8fafc;"></button>
+                    <button onclick="changeTextViewBg('#ffffff')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#ffffff;"></button>
+                    <button onclick="changeTextViewBg('#1e293b')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#1e293b;"></button>
+                    <button onclick="changeTextViewBg('#0f172a')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#0f172a;"></button>
+                    <button onclick="changeTextViewBg('#fef3c7')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#fef3c7;"></button>
+                </div>
+                <input type="color" id="textViewBgColor" onchange="changeTextViewBg(this.value)" class="w-full mt-1" value="#f8fafc">
+            </div>
+
+            <div>
+                <label class="block font-bold mb-1">لون النص</label>
+                <div class="flex gap-2">
+                    <button onclick="changeTextViewColor('#1e293b')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#1e293b;"></button>
+                    <button onclick="changeTextViewColor('#0f172a')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#0f172a;"></button>
+                    <button onclick="changeTextViewColor('#f8fafc')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#f8fafc;"></button>
+                    <button onclick="changeTextViewColor('#ffffff')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#ffffff;"></button>
+                    <button onclick="changeTextViewColor('#dc2626')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#dc2626;"></button>
+                </div>
+                <input type="color" id="textViewColor" onchange="changeTextViewColor(this.value)" class="w-full mt-1" value="#1e293b">
+            </div>
+
+            <div>
+                <label class="block font-bold mb-1">حجم الخط في عرض النص</label>
+                <input type="range" min="12" max="24" value="14" id="textViewFontSize" oninput="changeTextViewFontSize(this.value)" class="w-full accent-blue-600">
+                <span id="textViewFontSizeLabel" class="text-xs">14px</span>
+            </div>
+
+            <div>
+                <label class="block font-bold mb-1">لون خلفية عرض PDF</label>
+                <div class="flex gap-2">
+                    <button onclick="changePdfViewBg('#ffffff')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#ffffff;"></button>
+                    <button onclick="changePdfViewBg('#f8fafc')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#f8fafc;"></button>
+                    <button onclick="changePdfViewBg('#1e293b')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#1e293b;"></button>
+                    <button onclick="changePdfViewBg('#0f172a')" class="w-7 h-7 rounded-full border border-gray-300" style="background:#0f172a;"></button>
+                </div>
+                <input type="color" id="pdfViewBgColor" onchange="changePdfViewBg(this.value)" class="w-full mt-1" value="#ffffff">
             </div>
         </div>
     </div>
@@ -479,7 +631,7 @@
     // 1. فتح قاعدة البيانات (IndexedDB)
     // ============================================
     const DB_NAME = 'MedicalAppDB';
-    const DB_VERSION = 1;
+    const DB_VERSION = 2;
     let db = null;
 
     function openDB() {
@@ -586,7 +738,78 @@
             }
         }
     }
-          // OCR Extractor
+
+    // ============================================
+    // 6. دوال التحكم في عرض النص (OCR)
+    // ============================================
+    let isFullscreen = false;
+    let currentFullscreenType = null;
+
+    function toggleFullscreen(type) {
+        isFullscreen = !isFullscreen;
+        currentFullscreenType = type;
+        
+        const textContainer = document.querySelector('.text-view-container');
+        const pdfContainer = document.querySelector('.pdf-view-container');
+        const closeBtn = document.getElementById('closeFullscreenBtn');
+        
+        if (type === 'text' && textContainer) {
+            textContainer.classList.toggle('fullscreen', isFullscreen);
+            closeBtn.classList.toggle('active', isFullscreen);
+            document.body.style.overflow = isFullscreen ? 'hidden' : '';
+        }
+        
+        if (type === 'pdf' && pdfContainer) {
+            pdfContainer.classList.toggle('fullscreen', isFullscreen);
+            closeBtn.classList.toggle('active', isFullscreen);
+            document.body.style.overflow = isFullscreen ? 'hidden' : '';
+        }
+    }
+
+    function closeFullscreen() {
+        if (currentFullscreenType === 'text') {
+            const textContainer = document.querySelector('.text-view-container');
+            if (textContainer) {
+                textContainer.classList.remove('fullscreen');
+            }
+        }
+        if (currentFullscreenType === 'pdf') {
+            const pdfContainer = document.querySelector('.pdf-view-container');
+            if (pdfContainer) {
+                pdfContainer.classList.remove('fullscreen');
+            }
+        }
+        isFullscreen = false;
+        currentFullscreenType = null;
+        document.getElementById('closeFullscreenBtn').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // ============================================
+    // 7. دوال إعدادات عرض النص والـ PDF
+    // ============================================
+    function changeTextViewBg(color) {
+        document.documentElement.style.setProperty('--text-view-bg', color);
+        document.getElementById('textViewBgColor').value = color;
+    }
+
+    function changeTextViewColor(color) {
+        document.documentElement.style.setProperty('--text-view-color', color);
+        document.getElementById('textViewColor').value = color;
+    }
+
+    function changeTextViewFontSize(size) {
+        document.documentElement.style.setProperty('--text-view-font-size', size + 'px');
+        document.getElementById('textViewFontSizeLabel').textContent = size + 'px';
+    }
+
+    function changePdfViewBg(color) {
+        document.documentElement.style.setProperty('--pdf-view-bg', color);
+        document.getElementById('pdfViewBgColor').value = color;
+    }
+        // ============================================
+        // 8. OCR - استخراج النص من PDF (جميع الصفحات)
+        // ============================================
         async function extractPdfTextFromForm() {
             const fileInput = document.getElementById('testPdfFileInput');
             const status = document.getElementById('pdfFormStatus');
@@ -605,10 +828,11 @@
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 let fullText = '';
-                const maxPages = Math.min(pdf.numPages, 10);
+                // استخراج جميع الصفحات (بدون حد أقصى)
+                const totalPages = pdf.numPages;
 
-                for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
-                    status.innerText = `قراءة الصفحة (${pageNum} من ${maxPages})...`;
+                for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                    status.innerText = `قراءة الصفحة (${pageNum} من ${totalPages})...`;
                     const page = await pdf.getPage(pageNum);
                     const textContent = await page.getTextContent();
                     let pageText = textContent.items.map(item => item.str).join(' ');
@@ -629,15 +853,21 @@
 
                     fullText += `--- [صفحة ${pageNum}] ---\n` + pageText + '\n\n';
                     outputArea.value = fullText;
+                    
+                    // تحديث الحالة بشكل مستمر
+                    status.innerText = `تم استخراج ${pageNum} من ${totalPages} صفحات...`;
                 }
 
-                status.innerText = `تم تحويل النص بنجاح (${maxPages} صفحات)!`;
+                status.innerText = `✅ تم تحويل النص بنجاح (${totalPages} صفحات)!`;
             } catch (err) {
                 console.error(err);
-                status.innerText = 'حدث خطأ أثناء قراءة الملف.';
+                status.innerText = '❌ حدث خطأ أثناء قراءة الملف. تأكد من أن الملف صالح.';
             }
         }
 
+        // ============================================
+        // 9. حفظ الفحص
+        // ============================================
         function handleSaveTest(e) {
             e.preventDefault();
             const editId = document.getElementById('editTestId').value;
@@ -674,6 +904,9 @@
             closeAddTestModal();
         }
 
+        // ============================================
+        // 10. دوال الفتح والإغلاق
+        // ============================================
         function openAddTestModal() {
             document.getElementById('editTestId').value = '';
             document.getElementById('testNameInput').value = '';
@@ -685,6 +918,7 @@
             document.getElementById('extractedPdfTextStore').value = '';
             document.getElementById('videoUploadStatus').innerHTML = '';
             document.getElementById('pdfUploadStatus').innerHTML = '';
+            document.getElementById('pdfFormStatus').innerHTML = '';
             document.getElementById('addTestModal').classList.remove('hidden');
         }
 
@@ -708,12 +942,15 @@
             document.getElementById('addTestModal').classList.remove('hidden');
         }
 
+        // ============================================
+        // 11. عرض تفاصيل الفحص
+        // ============================================
         async function openTestDetail(id) {
             activeTestForDetail = tests.find(item => item.id === id);
             if (!activeTestForDetail) return;
 
             document.getElementById('modalDetailTitle').innerText = activeTestForDetail.name;
-            switchDetailTab('info');
+            await switchDetailTab('info');
             document.getElementById('testDetailModal').classList.remove('hidden');
         }
 
@@ -757,46 +994,82 @@
                         `;
             } else if (tabName === 'pdfOriginal') {
                 const fileId = t.pdfDataUrl;
+                let content = '';
+                
                 if (fileId && fileId.startsWith('pdf_')) {
                     try {
                         const result = await getFileFromDB(fileId);
                         if (result) {
                             const url = URL.createObjectURL(result.data);
-                            body.innerHTML = `<iframe src="${url}" class="w-full h-96 rounded-xl border"></iframe>`;
+                            content = `
+                                <div class="pdf-view-container">
+                                    <button class="fullscreen-btn" onclick="toggleFullscreen('pdf')" title="عرض بشاشة كاملة">
+                                        <i class="fa-solid fa-expand"></i>
+                                    </button>
+                                    <iframe src="${url}" class="w-full h-96 rounded-xl border"></iframe>
+                                </div>
+                            `;
                         } else {
-                            body.innerHTML = `<div class="text-center py-8 text-gray-400">لا يوجد ملف PDF مرفق</div>`;
+                            content = `<div class="text-center py-8 text-gray-400">لا يوجد ملف PDF مرفق</div>`;
                         }
                     } catch (e) {
-                        body.innerHTML = `<div class="text-center py-8 text-gray-400">خطأ في تحميل الملف</div>`;
+                        content = `<div class="text-center py-8 text-gray-400">خطأ في تحميل الملف</div>`;
                     }
                 } else if (fileId && fileId.startsWith('data:application/pdf')) {
-                    body.innerHTML = `<iframe src="${fileId}" class="w-full h-96 rounded-xl border"></iframe>`;
+                    content = `
+                        <div class="pdf-view-container">
+                            <button class="fullscreen-btn" onclick="toggleFullscreen('pdf')" title="عرض بشاشة كاملة">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                            <iframe src="${fileId}" class="w-full h-96 rounded-xl border"></iframe>
+                        </div>
+                    `;
                 } else {
-                    body.innerHTML = `<div class="text-center py-8 text-gray-400">لا يوجد ملف PDF مرفق</div>`;
+                    content = `<div class="text-center py-8 text-gray-400">لا يوجد ملف PDF مرفق</div>`;
                 }
+                body.innerHTML = content;
+                
             } else if (tabName === 'pdfText') {
-                body.innerHTML = t.pdfText ?
-                    `<div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl font-mono text-[11px] whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">${t.pdfText}</div>` :
-                    `<div class="text-center py-8 text-gray-400">لا يوجد نص محول مستخرج من PDF</div>`;
+                if (t.pdfText) {
+                    body.innerHTML = `
+                        <div class="text-view-container" id="textViewContainer">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-bold text-sm">📝 النص المستخرج من PDF</span>
+                                <button onclick="toggleFullscreen('text')" class="px-3 py-1 bg-primary-custom text-white rounded-lg text-xs font-bold hover:opacity-90 transition">
+                                    <i class="fa-solid fa-expand"></i> عرض بشاشة كاملة
+                                </button>
+                            </div>
+                            <div class="whitespace-pre-wrap leading-relaxed" style="font-size: var(--text-view-font-size);">
+                                ${t.pdfText}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    body.innerHTML = `<div class="text-center py-8 text-gray-400">لا يوجد نص محول مستخرج من PDF</div>`;
+                }
             } else if (tabName === 'videoPlay') {
                 const fileId = t.uploadedVideo;
+                let content = '';
+                
                 if (fileId && fileId.startsWith('video_')) {
                     try {
                         const result = await getFileFromDB(fileId);
                         if (result) {
                             const url = URL.createObjectURL(result.data);
-                            body.innerHTML = `<video controls class="w-full rounded-xl max-h-80"><source src="${url}"></video>`;
+                            content = `<video controls class="w-full rounded-xl max-h-80"><source src="${url}"></video>`;
                         } else {
-                            body.innerHTML = `<div class="text-center py-8 text-gray-400">لا يوجد فيديو مرفق</div>`;
+                            content = `<div class="text-center py-8 text-gray-400">لا يوجد فيديو مرفق</div>`;
                         }
                     } catch (e) {
-                        body.innerHTML = `<div class="text-center py-8 text-gray-400">خطأ في تحميل الفيديو</div>`;
+                        content = `<div class="text-center py-8 text-gray-400">خطأ في تحميل الفيديو</div>`;
                     }
                 } else if (fileId && fileId.startsWith('data:video/')) {
-                    body.innerHTML = `<video controls class="w-full rounded-xl max-h-80"><source src="${fileId}"></video>`;
+                    content = `<video controls class="w-full rounded-xl max-h-80"><source src="${fileId}"></video>`;
                 } else {
-                    body.innerHTML = `<div class="text-center py-8 text-gray-400">لا يوجد فيديو مرفق</div>`;
+                    content = `<div class="text-center py-8 text-gray-400">لا يوجد فيديو مرفق</div>`;
                 }
+                body.innerHTML = content;
+                
             } else if (tabName === 'videoLinks') {
                 body.innerHTML = (t.videoLinks && t.videoLinks.length) ?
                     `<div class="space-y-2">${t.videoLinks.map(v => `<a href="${v}" target="_blank" class="block p-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-blue-500 hover:underline truncate"><i class="fa-brands fa-youtube text-red-600 ml-2"></i>${v}</a>`).join('')}</div>` :
@@ -804,6 +1077,9 @@
             }
         }
 
+        // ============================================
+        // 12. دوال الحذف والأجهزة
+        // ============================================
         function deleteTest(id) {
             if (!confirm('تأكيد حذف الفحص؟')) return;
             tests = tests.filter(t => t.id !== id);
@@ -811,7 +1087,6 @@
             renderTests();
         }
 
-        // Devices Functions
         function handleAddDevice(e) {
             e.preventDefault();
             const name = document.getElementById('devName').value;
@@ -841,8 +1116,17 @@
             });
         }
 
+        // ============================================
+        // 13. دوال الإغلاق والتحكم
+        // ============================================
         function closeAddTestModal() { document.getElementById('addTestModal').classList.add('hidden'); }
-        function closeTestDetailModal() { document.getElementById('testDetailModal').classList.add('hidden'); }
+        function closeTestDetailModal() { 
+            document.getElementById('testDetailModal').classList.add('hidden');
+            // إغلاق الشاشة الكاملة إذا كانت مفتوحة
+            if (isFullscreen) {
+                closeFullscreen();
+            }
+        }
         function openCustomizationModal() { document.getElementById('customizationModal').classList.remove('hidden'); }
         function closeCustomizationModal() { document.getElementById('customizationModal').classList.add('hidden'); }
         function openDevicesModal() { document.getElementById('devicesModal').classList.remove('hidden'); }
